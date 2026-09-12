@@ -1,0 +1,43 @@
+{
+  "game_version": "1.45",
+  "game_swc_commit": "77b2c17ebd68e482b33ca91e06c91aff5dff5af6",
+  "game_swc_base_url": "https://raw.githubusercontent.com/modxvm/XVM/77b2c17ebd68e482b33ca91e06c91aff5dff5af6/src/xvm_actionscript/swc_lesta/",
+  "libraries": {
+    "base_app-1.0-SNAPSHOT.swc": "1cf3cc25a15b961241fe41a931e9f8f6a0c4e5f93c90179a5214f468da98093b",
+    "battle.swc": "4bd9b99b86afdda8a090f09f6a1f7daa7e3c9f5bc4df3cb3ce45bbd71be69705",
+    "common-1.0-SNAPSHOT.swc": "5db0194f09f1e1619a4d789152f3fe14a574a07b30b8a693e69073a52c493eae",
+    "common_i18n_library-1.0-SNAPSHOT.swc": "99d417f01b91aefb67cf6e0f21f38dfb32d57fc34dbc68cbe7928d0c2a94b767",
+    "gui_base-1.0-SNAPSHOT.swc": "14cba3e50adb525545159d25cd42a29fb539434fc54eb01acc5eefa7a0869acd",
+    "gui_battle-1.0-SNAPSHOT.swc": "e7dea060e754abcef8f2b87b7791f761ddbb6cf349e564aed25b54f0a23771da",
+    "gui_lobby-1.0-SNAPSHOT.swc": "6cfb4aa188edc5ba0584b37bef2746d14528c61b0ad6b9936f90bb1e20d03604",
+    "lobby.swc": "7e7e25b8d3590c230efce1e96d99e1aec6d2363fa22a4a351a3371500bee7477"
+  },
+  "playerglobal": {
+    "url": "https://docs.wotstat.info/download/playerglobal.swc",
+    "sha256": "58ecda7ac7de1a3add77cd880089c9edb0597bc8ac1c4bb0f9b4f5e13531b7a6"
+  },
+  "royale": {
+    "version": "0.9.12",
+    "url": "https://dlcdn.apache.org/royale/0.9.12/binaries/apache-royale-0.9.12-bin-js-swf.tar.gz",
+    "sha256": "cbb2d5306b97c84e3afb30240366994a14b63e84698621192fdd1505aae76c37",
+    "directory": "apache-royale-0.9.12-bin-js-swf/royale-asjs"
+  },
+  "java_linux_x86_64": {
+    "version": "11.0.27+6",
+    "url": "https://github.com/adoptium/temurin11-binaries/releases/download/jdk-11.0.27%2B6/OpenJDK11U-jre_x64_linux_hotspot_11.0.27_6.tar.gz",
+    "sha256": "d854baf8fcf835e28142d1519b88a1367c117e01fa1c18e34f9a1435d02a0437",
+    "directory": "jdk-11.0.27+6-jre"
+  },
+  "python2": {
+    "version": "2.7.18",
+    "url": "https://www.python.org/ftp/python/2.7.18/Python-2.7.18.tar.xz",
+    "sha256": "b62c0e7937551d0cc02b8fd5cb0f544f9405bafc9a54d3808ed4594812edef43",
+    "directory": "Python-2.7.18"
+  },
+  "ruffle": {
+    "version": "0.2.0",
+    "url": "https://registry.npmjs.org/@ruffle-rs/ruffle/-/ruffle-0.2.0.tgz",
+    "sha512": "dd28224eb97eab870244ea5688a648c17cab581a717d2141e36b0d50836ad57e0870b372fe5ab4d1405b2289cc07df4e9e6a359f1f75956c6423cdc8dad330bf",
+    "directory": "package"
+  }
+}

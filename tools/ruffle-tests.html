@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<meta charset="utf-8">
+<title>Better Sense AS3 tests</title>
+<body>
+<pre id="result" data-status="pending">Waiting for AS3 tests</pre>
+<div id="player"></div>
+<script>
+window.betterSenseTestResult = function (success, message) {
+    const result = document.getElementById("result");
+    result.dataset.status = success ? "passed" : "failed";
+    result.textContent = String(message);
+    fetch("/result", {method: "POST", body: JSON.stringify({success, message})});
+};
+window.RufflePlayer = window.RufflePlayer || {};
+window.RufflePlayer.config = {autoplay: "on", unmuteOverlay: "hidden", allowScriptAccess: true, logLevel: "error"};
+window.addEventListener("load", async function () {
+    try {
+        const player = window.RufflePlayer.newest().createPlayer();
+        document.getElementById("player").appendChild(player);
+        await player.ruffle().load({url: "/DecimalInputTests.swf", allowScriptAccess: true});
+    } catch (error) {
+        window.betterSenseTestResult(false, String(error));
+    }
+});
+</script>
+<script src="/runtime/ruffle.js"></script>
+</body>
+</html>

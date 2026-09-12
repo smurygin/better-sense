@@ -1,0 +1,9 @@
+.cache/
+.internal/
+build/
+dist/
+__pycache__/
+*.pyc
+*.pyo
+as3/bin/
+as3/libs/

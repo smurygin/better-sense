@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<royale-config>
+  <target-player>17.0</target-player>
+  <swf-version>17</swf-version>
+  <compiler>
+    <targets><target>SWF</target></targets>
+    <source-path><path-element>src</path-element></source-path>
+    <library-path />
+    <!-- Native game/player libraries are supplied as EXTERNAL by tools/build.py. -->
+    <external-library-path />
+    <as3>true</as3>
+    <es>false</es>
+    <debug>false</debug>
+    <compress>false</compress>
+    <verbose-stacktraces>false</verbose-stacktraces>
+  </compiler>
+</royale-config>

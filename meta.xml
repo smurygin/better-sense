@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<mod>
+  <name>dqs.better_sense</name>
+  <description>Better Sense: числовая настройка чувствительности мыши для Мира Танков.</description>
+  <version>{{VERSION}}</version>
+  <author>dqs</author>
+</mod>
