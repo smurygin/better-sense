@@ -1,11 +1,13 @@
 package
 {
     import flash.display.InteractiveObject;
+    import flash.display.Stage;
 
     /** Minimal host protocol; no native game library is loaded by these tests. */
     public final class App
     {
         public static var focused:InteractiveObject;
+        public static var stage:Stage;
         public static var tooltip:String = "";
         public static var utils:Object = {
             classFactory: { getComponent: createComponent },

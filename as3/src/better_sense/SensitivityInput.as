@@ -1,13 +1,16 @@
 package better_sense
 {
+    import flash.display.DisplayObject;
     import flash.display.InteractiveObject;
     import flash.events.Event;
     import flash.events.FocusEvent;
+    import flash.events.KeyboardEvent;
     import flash.events.MouseEvent;
     import flash.events.TextEvent;
     import flash.text.TextField;
     import flash.ui.Keyboard;
     import flash.utils.getDefinitionByName;
+    import flash.utils.Dictionary;
     import net.wg.data.constants.generated.TEXT_MANAGER_STYLES;
     import net.wg.gui.components.controls.NumericStepper;
     import net.wg.gui.components.controls.Slider;
@@ -50,6 +53,7 @@ package better_sense
         private var inputError:Boolean = false;
         private var textField:TextField;
         private var clipboardReader:Function;
+        private var skinRightInsets:Dictionary;
 
         public function SensitivityInput(owner:ControlsSettings, target:Slider, id:String,
             updating:Function, readClipboard:Function = null)
@@ -72,6 +76,7 @@ package better_sense
                 input.validateNow();
                 if (input.nextBtn1 == null || input.prevBtn1 == null)
                     throw new Error("Native NumericStepper has no arrow buttons");
+                captureInputSkins(input.width);
                 inputWidth = Math.max(MIN_INPUT_WIDTH, input.width);
                 input.setSize(inputWidth, input.height);
                 input.validateNow();
@@ -100,6 +105,7 @@ package better_sense
                 input.addEventListener(MouseEvent.MOUSE_WHEEL, onMouseWheel, false, 1000);
                 input.addEventListener(InputEvent.INPUT, onStepperInput, true, 1000);
                 input.addEventListener(InputEvent.INPUT, onStepperInput, false, 1000);
+                App.stage.addEventListener(KeyboardEvent.KEY_DOWN, onStageKeyDown, true, 2000);
                 input.nextBtn1.addEventListener(ButtonEvent.CLICK, onNext, false, 1000);
                 input.prevBtn1.addEventListener(ButtonEvent.CLICK, onPrev, false, 1000);
                 slider.addEventListener(SliderEvent.VALUE_CHANGE, onSliderChanged, false, 1000);
@@ -158,13 +164,33 @@ package better_sense
                 return;
             }
             // NumericStepper.initItems() runs only during configUI(). Resizing an
-            // initialized linkage stretches its frame without moving the arrows
-            // or widening the field, so repair those authored children explicitly.
+            // initialized linkage does not repeat its timeline layout, so repair
+            // the skin, arrows and text field explicitly after every state change.
+            for (var key:Object in skinRightInsets)
+            {
+                var skin:DisplayObject = key as DisplayObject;
+                if (skin != null && skin.parent == input)
+                    skin.width = Math.max(1, inputWidth - skin.x - Number(skinRightInsets[key]));
+            }
             var arrowWidth:Number = Math.max(input.nextBtn1.width, input.prevBtn1.width);
             var arrowX:Number = Math.round(inputWidth - arrowWidth - ARROW_RIGHT_PADDING);
             input.nextBtn1.x = input.prevBtn1.x = arrowX;
             input.textField.width = Math.max(1,
                 arrowX - input.textField.x - TEXT_ARROW_GAP);
+        }
+
+        private function captureInputSkins(authoredWidth:Number):void
+        {
+            skinRightInsets = new Dictionary(true);
+            for (var index:int = 0; index < input.numChildren; index++)
+            {
+                var child:DisplayObject = input.getChildAt(index);
+                if (child != input.nextBtn1 && child != input.prevBtn1 &&
+                    child != input.textField && isFinite(child.width) && child.width > 0)
+                {
+                    skinRightInsets[child] = authoredWidth - child.x - child.width;
+                }
+            }
         }
 
         private function unbindTextField():void
@@ -265,6 +291,15 @@ package better_sense
                 writingText = false;
             }
             onDraftChanged();
+        }
+
+        public function pasteClipboard():Boolean
+        {
+            var pasted:String = readClipboardText();
+            if (pasted == null)
+                return false;
+            pasteText(pasted);
+            return true;
         }
 
         private function readClipboardText():String
@@ -538,13 +573,11 @@ package better_sense
                 // user key event, then own the full replacement before native
                 // NumericStepper sanitization. If access is unavailable, preserve
                 // the client's normal Ctrl+V path.
-                var pasted:String = readClipboardText();
-                if (pasted == null)
+                if (!pasteClipboard())
                     return;
                 event.handled = true;
                 event.preventDefault();
                 event.stopImmediatePropagation();
-                pasteText(pasted);
                 return;
             }
             selectionStart = input.textField.selectionBeginIndex;
@@ -573,6 +606,19 @@ package better_sense
             }
         }
 
+        private function onStageKeyDown(event:KeyboardEvent):void
+        {
+            if (disposed || !event.ctrlKey || event.keyCode != Keyboard.V ||
+                !ownsFocus(App.utils.focusHandler.getFocus(0)) || !pasteClipboard())
+            {
+                return;
+            }
+            // This runs before CLIK InputDelegate and the settings window. Stop
+            // the native event so the TextField cannot apply the same paste twice.
+            event.preventDefault();
+            event.stopImmediatePropagation();
+        }
+
         private function showRange():void
         {
             App.toolTipMgr.showComplex("<body>Введите число от " + DecimalInput.format(slider.minimum) +
@@ -594,6 +640,8 @@ package better_sense
             if (disposed)
                 return;
             disposed = true;
+            if (App.stage != null)
+                App.stage.removeEventListener(KeyboardEvent.KEY_DOWN, onStageKeyDown, true);
             if (slider != null)
             {
                 slider.removeEventListener(SliderEvent.VALUE_CHANGE, onSliderChanged);
@@ -628,6 +676,7 @@ package better_sense
             slider = null;
             modelUpdating = null;
             clipboardReader = null;
+            skinRightInsets = null;
         }
     }
 }

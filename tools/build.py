@@ -120,7 +120,7 @@ def options(parser):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     options(parser)
-    parser.add_argument("--version", default="1.0.3")
+    parser.add_argument("--version", default="1.0.4")
     parser.add_argument("--output", type=Path, default=ROOT / "dist")
     parser.add_argument("--as3-tests", action="store_true", help="compile the pure DecimalInput test SWF instead of the mod")
     parser.add_argument("--as3-test-entry", choices=("DecimalInputTests", "SensitivityInputTests"), help="compile an AS3 test entry point instead of the mod")

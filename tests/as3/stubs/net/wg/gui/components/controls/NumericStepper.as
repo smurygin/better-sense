@@ -18,6 +18,7 @@ package net.wg.gui.components.controls
     public final class NumericStepper extends Sprite
     {
         public var textField:TextField;
+        public var bg:Sprite = new Sprite();
         public var nextBtn1:SoundButton = new SoundButton();
         public var prevBtn1:SoundButton = new SoundButton();
         public var stepSize:Number = 1;
@@ -44,7 +45,8 @@ package net.wg.gui.components.controls
 
         public function NumericStepper()
         {
-            redrawBounds();
+            redrawBackground();
+            addChild(bg);
             addChild(nextBtn1);
             addChild(prevBtn1);
             nextBtn1.x = prevBtn1.x = 39;
@@ -78,15 +80,19 @@ package net.wg.gui.components.controls
         {
             controlWidth = valueWidth;
             controlHeight = valueHeight;
-            redrawBounds();
         }
 
-        private function redrawBounds():void
+        override public function get width():Number { return controlWidth; }
+        override public function set width(value:Number):void { controlWidth = value; }
+        override public function get height():Number { return controlHeight; }
+        override public function set height(value:Number):void { controlHeight = value; }
+
+        private function redrawBackground():void
         {
-            graphics.clear();
-            graphics.beginFill(0);
-            graphics.drawRect(0, 0, controlWidth, controlHeight);
-            graphics.endFill();
+            bg.graphics.clear();
+            bg.graphics.beginFill(0);
+            bg.graphics.drawRect(0, 0, 55, 30);
+            bg.graphics.endFill();
         }
 
         public function get minimum():Number { return _minimum; }

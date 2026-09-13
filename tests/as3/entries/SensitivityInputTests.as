@@ -5,6 +5,7 @@ package
     import flash.events.Event;
     import flash.events.FocusEvent;
     import flash.events.MouseEvent;
+    import flash.events.KeyboardEvent;
     import flash.events.TextEvent;
     import flash.external.ExternalInterface;
     import flash.text.TextField;
@@ -46,6 +47,7 @@ package
         private function run(event:Event = null):void
         {
             removeEventListener(Event.ADDED_TO_STAGE, run);
+            App.stage = stage;
             testHydrationAndPrecision();
             testEditingAndSourceEvents();
             testInvalidEdits();
@@ -55,6 +57,7 @@ package
             testNativeFrameValidation();
             testStepperButtons();
             testStepperKeyboardAndWheel();
+            testStageClipboardCommand();
             testClipboardCommand();
             testClipboardCommandPassthrough();
             testHomeEndSelection();
@@ -131,6 +134,8 @@ package
                 "authored arrows do not overlap the value field");
             check(row.input.nextBtn1.x + row.input.nextBtn1.width <= row.input.width,
                 "authored arrows remain fully inside the stepper");
+            check(row.input.bg.x + row.input.bg.width >= row.input.nextBtn1.x + row.input.nextBtn1.width,
+                "visible input background reaches the relocated arrows");
             check(row.input.textField.textWidth + 4 <= row.input.textField.width,
                 "full six-decimal value fits without horizontal clipping");
             focus();
@@ -432,6 +437,21 @@ package
             same(row.input.textField.text, "0.123456", "Ctrl+V replaces the complete selected value");
             same(slider.value, 0.123456, "Ctrl+V stages the exact pasted coefficient");
             same(observed.length, 1, "Ctrl+V emits one setting change");
+        }
+
+        private function testStageClipboardCommand():void
+        {
+            fixture(0.5);
+            focus();
+            clipboardText = "0,234567";
+            row.input.textField.setSelection(0, row.input.textField.text.length);
+            var event:KeyboardEvent = new KeyboardEvent(KeyboardEvent.KEY_DOWN,
+                true, true, 0, Keyboard.V, 0, true);
+            var allowed:Boolean = row.input.textField.dispatchEvent(event);
+            check(!allowed && event.isDefaultPrevented(), "Stage capture owns Ctrl+V before settings input routing");
+            same(row.input.textField.text, "0,234567", "Stage Ctrl+V replaces the selected field text");
+            same(slider.value, 0.234567, "Stage Ctrl+V stages the exact pasted coefficient");
+            same(observed.length, 1, "Stage Ctrl+V emits one setting change");
         }
 
         private function testHomeEndSelection():void
