@@ -71,6 +71,7 @@ class FakeAPI(object):
         self.registered = {}
         self.next_callback = 0
         self.load_error = False
+        self.clipboard_text = None
 
     def get_app(self, namespace):
         return self.apps.get(namespace)
@@ -96,6 +97,9 @@ class FakeAPI(object):
 
     def destroy_view(self, app, alias):
         self.destroyed.append((app, alias))
+
+    def read_clipboard(self):
+        return self.clipboard_text
 
     def schedule(self, delay, callback):
         self.next_callback += 1
@@ -166,6 +170,11 @@ class RuntimeTest(unittest.TestCase):
         self.api.listeners['initialized'](FakeEvent(self.lobby.appNS))
         self.assertEqual(len(self.api.loaded), 2)
         self.assertEqual(set(self.api.registered), set([VIEW_ALIAS]))
+
+    def test_view_exposes_client_clipboard_text(self):
+        self.api.clipboard_text = u'0,123456'
+        helper = self.make_helper()
+        self.assertEqual(helper.readClipboard(), u'0,123456')
 
     def test_slow_battle_preload_does_not_disable_helper_before_settings_open(self):
         state = self.runtime.states[self.battle.appNS]

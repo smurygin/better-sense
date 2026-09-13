@@ -140,6 +140,13 @@ class Runtime(object):
             def reportError(self, message):
                 runtime._view_error(self, message)
 
+            def readClipboard(self):
+                try:
+                    return runtime.api.read_clipboard()
+                except Exception:
+                    _log.exception('Better Sense: client clipboard read failed.')
+                    return None
+
             def _dispose(self):
                 runtime._view_disposed(self)
                 super(BetterSenseView, self)._dispose()

@@ -39,15 +39,15 @@ package net.wg.gui.components.controls
         private var integralInvalid:Boolean = true;
         private var invalid:Boolean = true;
         private var pendingValue:Number = NaN;
+        private var controlWidth:Number = 55;
+        private var controlHeight:Number = 30;
 
         public function NumericStepper()
         {
-            graphics.beginFill(0);
-            graphics.drawRect(0, 0, 92, 30);
-            graphics.endFill();
+            redrawBounds();
             addChild(nextBtn1);
             addChild(prevBtn1);
-            nextBtn1.x = prevBtn1.x = 76;
+            nextBtn1.x = prevBtn1.x = 39;
             nextBtn1.y = 2;
             prevBtn1.y = 16;
             textField = createField();
@@ -65,13 +65,28 @@ package net.wg.gui.components.controls
             result.type = "input";
             result.x = 4;
             result.y = 4;
-            result.width = 68;
+            result.width = 31;
             result.height = 22;
             result.restrict = _integral ? "0-9" : "0-9.";
             result.addEventListener(Event.CHANGE, nativeChange);
             result.addEventListener(FocusEvent.FOCUS_OUT, nativeBlur);
             addChild(result);
             return result;
+        }
+
+        public function setSize(valueWidth:Number, valueHeight:Number):void
+        {
+            controlWidth = valueWidth;
+            controlHeight = valueHeight;
+            redrawBounds();
+        }
+
+        private function redrawBounds():void
+        {
+            graphics.clear();
+            graphics.beginFill(0);
+            graphics.drawRect(0, 0, controlWidth, controlHeight);
+            graphics.endFill();
         }
 
         public function get minimum():Number { return _minimum; }

@@ -29,10 +29,12 @@ package better_sense
         private var rows:Vector.<SensitivityInput> = new Vector.<SensitivityInput>();
         private var externalModelUpdate:Function;
         private var report:Function;
+        private var clipboardReader:Function;
         private var tabDepth:uint = 0;
         private var disposed:Boolean = false;
 
-        public function SettingsBinding(target:SettingsWindow, updating:Function, reportError:Function)
+        public function SettingsBinding(target:SettingsWindow, updating:Function,
+            reportError:Function, readClipboard:Function)
         {
             window = target;
             stack = target.view;
@@ -40,6 +42,7 @@ package better_sense
                 throw new Error("Incomplete native SettingsWindow");
             externalModelUpdate = updating;
             report = reportError;
+            clipboardReader = readClipboard;
             stack.addEventListener(ViewStackEvent.NEED_UPDATE, beforeTabUpdate, false, 1000);
             stack.addEventListener(ViewStackEvent.NEED_UPDATE, afterTabUpdate, false, -1000);
             stack.addEventListener(ViewStackEvent.VIEW_CHANGED, beforeTabUpdate, false, 1000);
@@ -67,7 +70,7 @@ package better_sense
                     var slider:Slider = target[id + "Slider"] as Slider;
                     if (slider == null)
                         throw new Error("Missing sensitivity slider " + id);
-                    rows.push(new SensitivityInput(target, slider, id, isModelUpdating));
+                    rows.push(new SensitivityInput(target, slider, id, isModelUpdating, clipboardReader));
                 }
                 refresh();
             }
@@ -228,6 +231,7 @@ package better_sense
             inputDispatcher = null;
             externalModelUpdate = null;
             report = null;
+            clipboardReader = null;
         }
     }
 }

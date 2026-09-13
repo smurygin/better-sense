@@ -23,6 +23,11 @@ package better_sense
     /** One field and its existing slider; no separate persistent setting. */
     public final class SensitivityInput
     {
+        private static const MIN_INPUT_WIDTH:Number = 92;
+        private static const INPUT_GAP:Number = 8;
+        private static const ARROW_RIGHT_PADDING:Number = 3;
+        private static const TEXT_ARROW_GAP:Number = 4;
+
         public var slider:Slider;
         public var input:NumericStepper;
 
@@ -44,13 +49,16 @@ package better_sense
         private var nativeReady:Boolean = false;
         private var inputError:Boolean = false;
         private var textField:TextField;
+        private var clipboardReader:Function;
 
-        public function SensitivityInput(owner:ControlsSettings, target:Slider, id:String, updating:Function)
+        public function SensitivityInput(owner:ControlsSettings, target:Slider, id:String,
+            updating:Function, readClipboard:Function = null)
         {
             controls = owner;
             slider = target;
             settingId = id;
             modelUpdating = updating;
+            clipboardReader = readClipboard;
             originalWidth = slider.width;
             try
             {
@@ -64,11 +72,11 @@ package better_sense
                 input.validateNow();
                 if (input.nextBtn1 == null || input.prevBtn1 == null)
                     throw new Error("Native NumericStepper has no arrow buttons");
-                // Keep the linkage at its authored size. Resizing this skin after
-                // construction stretches its frame but leaves the private arrow
-                // layout at the original width, putting the buttons over the text.
-                inputWidth = input.width;
-                if (!isFinite(inputWidth) || inputWidth <= 0 || originalWidth - inputWidth - 8 < 48)
+                inputWidth = Math.max(MIN_INPUT_WIDTH, input.width);
+                input.setSize(inputWidth, input.height);
+                input.validateNow();
+                layoutInput();
+                if (!isFinite(inputWidth) || inputWidth <= 0 || originalWidth - inputWidth - INPUT_GAP < 48)
                     throw new Error("Sensitivity row is too narrow: " + id);
                 nativeReady = true;
                 // Native value/bounds setters require initialized arrow buttons.
@@ -80,8 +88,8 @@ package better_sense
                 input.maximum = maximum;
                 input.labelFunction = formatDraft;
                 input.validateNow();
-                slider.width = originalWidth - inputWidth - 8;
-                input.x = slider.x + slider.width + 8;
+                slider.width = originalWidth - inputWidth - INPUT_GAP;
+                input.x = slider.x + slider.width + INPUT_GAP;
                 input.y = slider.y + (slider.height - input.height) / 2;
                 bindTextField();
                 input.addEventListener(ComponentEvent.STATE_CHANGE, onStateChange);
@@ -139,6 +147,24 @@ package better_sense
             textField.restrict = null; // A character whitelist silently sanitizes paste.
             textField.multiline = false;
             textField.maxChars = 0;
+            layoutInput();
+        }
+
+        private function layoutInput():void
+        {
+            if (input == null || input.textField == null || input.nextBtn1 == null ||
+                input.prevBtn1 == null || !isFinite(inputWidth) || inputWidth <= 0)
+            {
+                return;
+            }
+            // NumericStepper.initItems() runs only during configUI(). Resizing an
+            // initialized linkage stretches its frame without moving the arrows
+            // or widening the field, so repair those authored children explicitly.
+            var arrowWidth:Number = Math.max(input.nextBtn1.width, input.prevBtn1.width);
+            var arrowX:Number = Math.round(inputWidth - arrowWidth - ARROW_RIGHT_PADDING);
+            input.nextBtn1.x = input.prevBtn1.x = arrowX;
+            input.textField.width = Math.max(1,
+                arrowX - input.textField.x - TEXT_ARROW_GAP);
         }
 
         private function unbindTextField():void
@@ -243,13 +269,27 @@ package better_sense
 
         private function readClipboardText():String
         {
+            var value:Object = null;
+            try
+            {
+                if (clipboardReader != null)
+                {
+                    value = clipboardReader();
+                    if (value != null)
+                        return String(value);
+                }
+            }
+            catch (bridgeError:Error)
+            {
+                // Keep the Flash fallback available if the Python bridge fails.
+            }
             try
             {
                 // Resolve dynamically so a client that hides this Flash API can
                 // fall back to the native TextField editor without a VerifyError.
                 var clipboardClass:Object = getDefinitionByName("flash.desktop.Clipboard");
                 var formatsClass:Object = getDefinitionByName("flash.desktop.ClipboardFormats");
-                var value:Object = clipboardClass.generalClipboard.getData(formatsClass.TEXT_FORMAT);
+                value = clipboardClass.generalClipboard.getData(formatsClass.TEXT_FORMAT);
                 return value == null ? null : String(value);
             }
             catch (error:Error)
@@ -587,6 +627,7 @@ package better_sense
             controls = null;
             slider = null;
             modelUpdating = null;
+            clipboardReader = null;
         }
     }
 }

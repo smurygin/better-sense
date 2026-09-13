@@ -33,6 +33,7 @@ package
         private var updating:Boolean;
         private var observed:Array;
         private var observedNativeIndices:Array;
+        private var clipboardText:String;
 
         public function SensitivityInputTests()
         {
@@ -54,6 +55,7 @@ package
             testNativeFrameValidation();
             testStepperButtons();
             testStepperKeyboardAndWheel();
+            testClipboardCommand();
             testClipboardCommandPassthrough();
             testHomeEndSelection();
             testStepperLimitsAndDisabled();
@@ -77,12 +79,15 @@ package
             controls.data = {getByKey: function(id:String):Object { return property; }};
             slider.position = Math.round(value / slider.snapInterval) * slider.snapInterval;
             updating = false;
+            clipboardText = null;
             observed = [];
             observedNativeIndices = [];
             controls.addEventListener(IndexEvent.INDEX_CHANGE, function(event:IndexEvent):void {
                 observedNativeIndices.push(event.index);
             });
-            row = new SensitivityInput(controls, slider, "mouseArcadeSens", function():Boolean { return updating; });
+            row = new SensitivityInput(controls, slider, "mouseArcadeSens",
+                function():Boolean { return updating; },
+                function():String { return clipboardText; });
             slider.addEventListener(SliderEvent.VALUE_CHANGE, function(event:SliderEvent):void {
                 observed.push(slider.value);
             });
@@ -126,6 +131,8 @@ package
                 "authored arrows do not overlap the value field");
             check(row.input.nextBtn1.x + row.input.nextBtn1.width <= row.input.width,
                 "authored arrows remain fully inside the stepper");
+            check(row.input.textField.textWidth + 4 <= row.input.textField.width,
+                "full six-decimal value fits without horizontal clipping");
             focus();
             blur();
             same(slider.value, 0.123456789, "focus and blur without editing preserve precision");
@@ -395,12 +402,11 @@ package
 
         private function testClipboardCommandPassthrough():void
         {
-            // Only command routing is tested here; the host double does not
-            // implement system clipboard operations or native Ctrl+A selection.
+            // Selection and copy remain native commands.
             fixture(0.123456);
             focus();
             row.input.textField.setSelection(1, 4);
-            for each (var code:uint in [65, 67, 86])
+            for each (var code:uint in [65, 67])
             {
                 for each (var state:String in [InputValue.KEY_DOWN, InputValue.KEY_UP])
                 {
@@ -413,6 +419,19 @@ package
             }
             same(slider.value, 0.123456, "Ctrl commands do not change coefficient");
             same(observed.length, 0, "Ctrl commands cannot emit slider changes");
+        }
+
+        private function testClipboardCommand():void
+        {
+            fixture(0.5);
+            focus();
+            clipboardText = "0.123456";
+            row.input.textField.setSelection(0, row.input.textField.text.length);
+            var event:InputEvent = inputKey(Keyboard.V, InputValue.KEY_DOWN, null, true, true);
+            check(event.handled && event.isDefaultPrevented(), "Ctrl+V is owned when client clipboard text is available");
+            same(row.input.textField.text, "0.123456", "Ctrl+V replaces the complete selected value");
+            same(slider.value, 0.123456, "Ctrl+V stages the exact pasted coefficient");
+            same(observed.length, 1, "Ctrl+V emits one setting change");
         }
 
         private function testHomeEndSelection():void

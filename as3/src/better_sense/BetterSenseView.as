@@ -15,6 +15,7 @@ package better_sense
     {
         public var ready:Function;
         public var reportError:Function;
+        public var readClipboard:Function;
 
         private var observedStage:Stage;
         private var windows:Dictionary = new Dictionary();
@@ -108,7 +109,7 @@ package better_sense
                 return;
             try
             {
-                windows[window] = new SettingsBinding(window, isModelUpdating, logError);
+                windows[window] = new SettingsBinding(window, isModelUpdating, logError, readClipboard);
                 window.addEventListener(LifeCycleEvent.ON_BEFORE_DISPOSE, onWindowDispose, false, 1000);
             }
             catch (error:Error)
@@ -177,6 +178,7 @@ package better_sense
             disable();
             ready = null;
             reportError = null;
+            readClipboard = null;
             super.onBeforeDispose();
         }
     }

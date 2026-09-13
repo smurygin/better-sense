@@ -97,3 +97,33 @@ class _ClientAPI(object):
         manager = app.containerManager
         if manager is not None:
             manager.destroyViews(alias)
+
+    def read_clipboard(self):
+        """Read Unicode text synchronously through the Windows client process."""
+        import ctypes
+
+        cf_unicode_text = 13
+        user32 = ctypes.windll.user32
+        kernel32 = ctypes.windll.kernel32
+        user32.GetClipboardData.restype = ctypes.c_void_p
+        kernel32.GlobalLock.argtypes = (ctypes.c_void_p,)
+        kernel32.GlobalLock.restype = ctypes.c_void_p
+
+        if not user32.IsClipboardFormatAvailable(cf_unicode_text):
+            return None
+        if not user32.OpenClipboard(None):
+            return None
+        handle = None
+        address = None
+        try:
+            handle = user32.GetClipboardData(cf_unicode_text)
+            if not handle:
+                return None
+            address = kernel32.GlobalLock(handle)
+            if not address:
+                return None
+            return ctypes.wstring_at(address)
+        finally:
+            if address:
+                kernel32.GlobalUnlock(handle)
+            user32.CloseClipboard()
