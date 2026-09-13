@@ -120,6 +120,12 @@ package
             same(slider.value, 0.123456789, "initial attach restores full model precision");
             same(row.input.textField.text, "0.123457", "initial display rounds only its text");
             same(observed.length, 0, "initial attach does not dirty settings");
+            same(row.input.width, 92, "authored stepper width is preserved");
+            same(slider.width, 100, "slider yields exactly the authored stepper width and gap");
+            check(row.input.textField.x + row.input.textField.width <= row.input.nextBtn1.x,
+                "authored arrows do not overlap the value field");
+            check(row.input.nextBtn1.x + row.input.nextBtn1.width <= row.input.width,
+                "authored arrows remain fully inside the stepper");
             focus();
             blur();
             same(slider.value, 0.123456789, "focus and blur without editing preserve precision");

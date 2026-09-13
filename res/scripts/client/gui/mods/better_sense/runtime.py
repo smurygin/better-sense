@@ -188,12 +188,18 @@ class Runtime(object):
         state = _AppState(app)
         self.states[app.appNS] = state
         try:
-            state.timeout = self.api.schedule(
-                LOAD_TIMEOUT_SECONDS, lambda: self._load_timeout(state))
             self.api.load_view(app, VIEW_ALIAS)
         except Exception:
             self._fail(state, 'helper SWF could not be loaded')
         return state
+
+    def _start_wait_timeout(self, state):
+        # Lobby and battle applications preload the helper at different points in
+        # their startup. A busy battle load can legitimately take more than two
+        # seconds, so only time out once a real settings window is waiting for it.
+        if state.timeout is None and not state.ready and not state.failed:
+            state.timeout = self.api.schedule(
+                LOAD_TIMEOUT_SECONDS, lambda: self._load_timeout(state))
 
     def _window_state(self, window):
         try:
@@ -207,6 +213,7 @@ class Runtime(object):
     def _refresh(self, original, window, args, kwargs):
         state = self._window_state(window)
         if state is not None and not state.ready and not state.failed:
+            self._start_wait_timeout(state)
             # Defer the entire client refresh: its as_openTabS/video/counter calls
             # depend on as_setDataS having completed first.
             state.pending[window] = ('refresh', original, args, kwargs)
@@ -216,6 +223,7 @@ class Runtime(object):
     def _set_data(self, original, window, args, kwargs):
         state = self._window_state(window)
         if state is not None and not state.ready and not state.failed:
+            self._start_wait_timeout(state)
             pending = state.pending.get(window)
             if pending is None or pending[0] != 'refresh':
                 state.pending[window] = ('data', original, args, kwargs)

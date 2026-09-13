@@ -162,9 +162,23 @@ class RuntimeTest(unittest.TestCase):
 
     def test_preloads_once_per_app(self):
         self.assertEqual(len(self.api.loaded), 2)
+        self.assertEqual(self.api.callbacks, {})
         self.api.listeners['initialized'](FakeEvent(self.lobby.appNS))
         self.assertEqual(len(self.api.loaded), 2)
         self.assertEqual(set(self.api.registered), set([VIEW_ALIAS]))
+
+    def test_slow_battle_preload_does_not_disable_helper_before_settings_open(self):
+        state = self.runtime.states[self.battle.appNS]
+        self.assertIsNone(state.timeout)
+        self.assertFalse(state.failed)
+        battle_window = self.window_type(self.battle)
+        battle_window._update()
+        self.assertIsNotNone(state.timeout)
+        self.make_helper(self.battle, trace=battle_window.trace)
+        self.assertTrue(state.ready)
+        self.assertFalse(state.failed)
+        self.assertEqual(battle_window.trace,
+                         ['begin', ('data', 0.123456), 'end', 'open_tab'])
 
     def test_preloaded_app_and_view_weak_proxy_share_one_state(self):
         state = self.runtime.states[self.lobby.appNS]

@@ -42,8 +42,14 @@ package net.wg.gui.components.controls
 
         public function NumericStepper()
         {
+            graphics.beginFill(0);
+            graphics.drawRect(0, 0, 92, 30);
+            graphics.endFill();
             addChild(nextBtn1);
             addChild(prevBtn1);
+            nextBtn1.x = prevBtn1.x = 76;
+            nextBtn1.y = 2;
+            prevBtn1.y = 16;
             textField = createField();
             nextBtn1.addEventListener(ButtonEvent.CLICK, nativeNext);
             prevBtn1.addEventListener(ButtonEvent.CLICK, nativePrev);
@@ -57,6 +63,10 @@ package net.wg.gui.components.controls
         {
             var result:TextField = new TextField();
             result.type = "input";
+            result.x = 4;
+            result.y = 4;
+            result.width = 68;
+            result.height = 22;
             result.restrict = _integral ? "0-9" : "0-9.";
             result.addEventListener(Event.CHANGE, nativeChange);
             result.addEventListener(FocusEvent.FOCUS_OUT, nativeBlur);

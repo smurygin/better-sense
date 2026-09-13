@@ -7,6 +7,7 @@ package better_sense
     import flash.events.TextEvent;
     import flash.text.TextField;
     import flash.ui.Keyboard;
+    import flash.utils.getDefinitionByName;
     import net.wg.data.constants.generated.TEXT_MANAGER_STYLES;
     import net.wg.gui.components.controls.NumericStepper;
     import net.wg.gui.components.controls.Slider;
@@ -29,6 +30,7 @@ package better_sense
         private var settingId:String;
         private var modelUpdating:Function;
         private var originalWidth:Number;
+        private var inputWidth:Number;
         private var acceptedValue:Number = NaN;
         private var editOrigin:Number = NaN;
         private var lastDraft:String = "";
@@ -50,15 +52,10 @@ package better_sense
             settingId = id;
             modelUpdating = updating;
             originalWidth = slider.width;
-            var fieldWidth:Number = Math.min(116, Math.max(92, originalWidth * 0.46));
-            if (originalWidth - fieldWidth - 8 < 48)
-                throw new Error("Sensitivity row is too narrow: " + id);
             try
             {
                 input = App.utils.classFactory.getComponent("NumericStepper", NumericStepper, {
-                    name: "betterSense_" + id,
-                    width: fieldWidth,
-                    height: 30
+                    name: "betterSense_" + id
                 }) as NumericStepper;
                 if (input == null)
                     throw new Error("Native NumericStepper linkage is unavailable");
@@ -67,6 +64,12 @@ package better_sense
                 input.validateNow();
                 if (input.nextBtn1 == null || input.prevBtn1 == null)
                     throw new Error("Native NumericStepper has no arrow buttons");
+                // Keep the linkage at its authored size. Resizing this skin after
+                // construction stretches its frame but leaves the private arrow
+                // layout at the original width, putting the buttons over the text.
+                inputWidth = input.width;
+                if (!isFinite(inputWidth) || inputWidth <= 0 || originalWidth - inputWidth - 8 < 48)
+                    throw new Error("Sensitivity row is too narrow: " + id);
                 nativeReady = true;
                 // Native value/bounds setters require initialized arrow buttons.
                 input.integral = false;
@@ -77,7 +80,7 @@ package better_sense
                 input.maximum = maximum;
                 input.labelFunction = formatDraft;
                 input.validateNow();
-                slider.width = originalWidth - fieldWidth - 8;
+                slider.width = originalWidth - inputWidth - 8;
                 input.x = slider.x + slider.width + 8;
                 input.y = slider.y + (slider.height - input.height) / 2;
                 bindTextField();
@@ -212,6 +215,46 @@ package better_sense
             {
                 event.preventDefault();
                 event.stopImmediatePropagation();
+            }
+        }
+
+        private function pasteText(pasted:String):void
+        {
+            var field:TextField = input.textField;
+            selectionStart = field.selectionBeginIndex;
+            selectionEnd = field.selectionEndIndex;
+            var draft:String = DecimalInput.replacement(
+                field.text, selectionStart, selectionEnd, pasted);
+            if (draft == null)
+                return;
+            writingText = true;
+            try
+            {
+                field.text = draft;
+                var caret:int = selectionStart + pasted.length;
+                field.setSelection(caret, caret);
+            }
+            finally
+            {
+                writingText = false;
+            }
+            onDraftChanged();
+        }
+
+        private function readClipboardText():String
+        {
+            try
+            {
+                // Resolve dynamically so a client that hides this Flash API can
+                // fall back to the native TextField editor without a VerifyError.
+                var clipboardClass:Object = getDefinitionByName("flash.desktop.Clipboard");
+                var formatsClass:Object = getDefinitionByName("flash.desktop.ClipboardFormats");
+                var value:Object = clipboardClass.generalClipboard.getData(formatsClass.TEXT_FORMAT);
+                return value == null ? null : String(value);
+            }
+            catch (error:Error)
+            {
+                return null;
             }
         }
 
@@ -446,9 +489,26 @@ package better_sense
         {
             if (disposed || event.handled)
                 return;
+            var code:uint = event.details.code;
+            if (event.details.ctrlKey && code == Keyboard.V)
+            {
+                if (event.details.value != InputValue.KEY_DOWN)
+                    return;
+                // TextField does not dispatch Event.PASTE. Read during the actual
+                // user key event, then own the full replacement before native
+                // NumericStepper sanitization. If access is unavailable, preserve
+                // the client's normal Ctrl+V path.
+                var pasted:String = readClipboardText();
+                if (pasted == null)
+                    return;
+                event.handled = true;
+                event.preventDefault();
+                event.stopImmediatePropagation();
+                pasteText(pasted);
+                return;
+            }
             selectionStart = input.textField.selectionBeginIndex;
             selectionEnd = input.textField.selectionEndIndex;
-            var code:uint = event.details.code;
             var direction:int = code == Keyboard.UP || code == Keyboard.NUMPAD_ADD ? 1 :
                 (code == Keyboard.DOWN || code == Keyboard.NUMPAD_SUBTRACT ? -1 : 0);
             if (direction == 0 && code != Keyboard.HOME && code != Keyboard.END)
